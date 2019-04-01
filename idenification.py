@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     # 畳み込みフィルターのモデルを作成
     # １段目
-    fil_num_1 = 32
+    fil_num_1 = 64
     conv_f_1 = tf.Variable(tf.truncated_normal([5,5,3,fil_num_1], mean=0.0, stddev=0.1, dtype=tf.float32))
     threshold_tensor_1 = tf.Variable(tf.constant(0.1, shape=[fil_num_1]))
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     img_2 = tf.nn.max_pool(img_1, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
 
     # ２段目
-    fil_num_2 = 64
+    fil_num_2 = 128
     conv_f_2 = tf.Variable(tf.truncated_normal([5,5,fil_num_1, fil_num_2], mean=0.0, stddev=0.1, dtype=tf.float32))
     threshold_tensor_2 = tf.Variable(tf.constant(0.1, shape=[fil_num_2]))
 
@@ -74,8 +74,8 @@ if __name__ == '__main__':
         saver = tf.train.Saver()
 
         data_set = DataSetAzure()
-        batch_size = 50
-        training_num = 10000
+        batch_size = 64
+        training_num = 20000
 
         # チェックポイントの確認
         ckpt_state = tf.train.get_checkpoint_state("./sess_data")
