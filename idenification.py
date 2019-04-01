@@ -65,7 +65,7 @@ if __name__ == '__main__':
     loss = - tf.reduce_sum(t * tf.log(tf.clip_by_value(p, 1e-10, 1)))
 
     # トレーニングアルゴリズムの定義
-    train_step = tf.train.AdamOptimizer(0.0001).minimize(loss)
+    train_step = tf.train.AdamOptimizer(0.000001).minimize(loss)
 
     # セッションインスタンス作成
     with tf.Session() as sess:
@@ -76,6 +76,13 @@ if __name__ == '__main__':
         data_set = DataSetAzure()
         batch_size = 50
         training_num = 10000
+
+        # チェックポイントの確認
+        ckpt_state = tf.train.get_checkpoint_state("./sess_data")
+        if ckpt_state:
+            # チェックポイントあれば、variableを取得
+            restore_model = ckpt_state.model_checkpoint_path
+            saver.restore(sess, restore_model)
 
         # トレーニング
         for i in range(training_num):
@@ -95,9 +102,10 @@ if __name__ == '__main__':
                 print('Step: %d, Accuracy: %d / %d' % (i+1, np.sum(result), len(result)))
 
                 if (i+1)%1000 == 0:
-                    test_datas = data_set.get_test_dataset()
-                    result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
-                                                              feed_dict={img_base: test_datas})
+                    #test_datas = data_set.get_test_dataset()
+                    #result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
+                     #                                         feed_dict={img_base: test_datas})
+                    saver.save(sess, './sess_data/sess.ckpt', global_step=i+1)
                     print()
 
             else:
