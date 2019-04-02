@@ -82,7 +82,7 @@ if __name__ == '__main__':
             training_datas = data_set.get_training_dataset(start=batch_size*i, end=batch_size*(i+1))
             training_labels = data_set.get_training_labels(start=batch_size*i, end=batch_size*(i+1))
             sess.run(train_step, feed_dict={img_base: training_datas, t: training_labels})
-            result_p, w0, w1, fil_1, fil_2, b0, b1, result_loss = sess.run([p, W_0, W_1, conv_f_1, conv_f_2, b_0, b_1, conf],
+            result_p, w0, w1, fil_1, fil_2, b0, b1, result_loss = sess.run([p, W_0, W_1, conv_f_1, conv_f_2, b_0, b_1, loss],
                                                                             feed_dict={img_base: training_datas, t: training_labels})
             # test_datas = data_set.get_test_dataset()
             # result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 test_datas = data_set.get_test_dataset()
                 result_p, result_p_base, w0, w1, fil_1, fil_2, b0, b1,img0,img1,img2,img3,img4,img5, img6, img7 = sess.run([p, p_base, W_0, W_1, conv_f_1, conv_f_2, b_0, b_1, img_0, img_1, img_2, img_3, img_4, img_5,img_6, img_7], feed_dict={img_base: test_datas})
                 result = np.equal(np.argmax(result_p, 1), np.argmax(test_labels, 1))
-                print('Step: %d, Accuracy: %d / %d' % (i+1, np.sum(result), len(result)))
+                print('Step: %d, Accuracy: %d / %d, loss: %f' % (i+1, np.sum(result), len(result), result_loss))
 
                 if (i+1)%1000 == 0:
                     test_datas = data_set.get_test_dataset()
