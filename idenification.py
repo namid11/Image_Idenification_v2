@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     # 畳み込みフィルターのモデルを作成
     # １段目
-    fil_num_1 = 32
+    fil_num_1 = 64
     conv_f_1 = tf.Variable(tf.truncated_normal([5,5,3,fil_num_1], mean=0.0, stddev=0.1, dtype=tf.float32))
     threshold_tensor_1 = tf.Variable(tf.constant(0.1, shape=[fil_num_1]))
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     img_2 = tf.nn.max_pool(img_1, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
 
     # ２段目
-    fil_num_2 = 64
+    fil_num_2 = 128
     conv_f_2 = tf.Variable(tf.truncated_normal([5,5,fil_num_1, fil_num_2], mean=0.0, stddev=0.1, dtype=tf.float32))
     threshold_tensor_2 = tf.Variable(tf.constant(0.1, shape=[fil_num_2]))
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     loss = - tf.reduce_sum(t * tf.log(tf.clip_by_value(p, 1e-10, 1)))
 
     # トレーニングアルゴリズムの定義
-    train_step = tf.train.AdamOptimizer(0.0001).minimize(loss)
+    train_step = tf.train.AdamOptimizer(0.000001).minimize(loss)
 
     # セッションインスタンス作成
     with tf.Session() as sess:
@@ -74,8 +74,15 @@ if __name__ == '__main__':
         saver = tf.train.Saver()
 
         data_set = DataSetAzure()
-        batch_size = 50
-        training_num = 10000
+        batch_size = 64
+        training_num = 20000
+
+        # チェックポイントの確認
+        ckpt_state = tf.train.get_checkpoint_state("./sess_data")
+        if ckpt_state:
+            # チェックポイントあれば、variableを取得
+            restore_model = ckpt_state.model_checkpoint_path
+            saver.restore(sess, restore_model)
 
         # トレーニング
         for i in range(training_num):
@@ -95,9 +102,10 @@ if __name__ == '__main__':
                 print('Step: %d, Accuracy: %d / %d, loss: %f' % (i+1, np.sum(result), len(result), result_loss))
 
                 if (i+1)%1000 == 0:
-                    test_datas = data_set.get_test_dataset()
-                    result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
-                                                              feed_dict={img_base: test_datas})
+                    #test_datas = data_set.get_test_dataset()
+                    #result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
+                     #                                         feed_dict={img_base: test_datas})
+                    saver.save(sess, './sess_data/sess.ckpt', global_step=i+1)
                     print()
 
             else:
