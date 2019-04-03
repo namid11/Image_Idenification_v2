@@ -6,13 +6,13 @@ import os
 
 if __name__ == '__main__':
     # print()
-    dataset_azure = DataSetAzure()
-    dataset = dataset_azure.get_test_dataset()
-    for img in dataset: show_img(img)
+    # dataset_azure = DataSetAzure()
+    # dataset = dataset_azure.get_test_dataset()
+    # for img in dataset: show_img(img)
     # print(dataset_azure.get_test_labels())
     # print()
     # dataset = DataSetOperater()
-    # dataset.create()
+    # #dataset.create()
     # imgs = dataset.get_training_dataset()
     # show_img(imgs[1][0])
     # r = dataset.get_dataset()
@@ -45,4 +45,7 @@ if __name__ == '__main__':
     # with open('data/data.meta', 'rb') as data:
     #     shape_byte = data.read()
     #     shape = np.frombuffer(shape_byte, int)
+
+    img = cv2.imread(r"C:\Users\hiroy\Pictures\LabVIEW_2.png")
+    show_img(img)
     print()
