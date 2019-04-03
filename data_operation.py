@@ -37,34 +37,34 @@ class DataSetLocal(DataSetBase):
         super().__init__()
 
         # プログラムで使うデータセットのパス
-        self.data_dir_path = self.meta['dataset-base']['mac']
+        self.data_dir_path = self.meta['dataset-base']['local']
         # 対象ディレクトリ
         self.train_dir = self.meta['training-dirs']
         # テストディレクトリ
         self.test_dir = self.meta['test-dirs']
 
         # トレーニングデータセッタの画像のパスを取得
-        self.training_img_paths = []
+        self.training_imgpaths_labels = []
         for label,target_dir in enumerate(self.train_dir):
             for img_path in glob.glob(self.data_dir_path + '/' + target_dir + '/' + '*.jpg'):
-                self.training_img_paths.append([label, img_path])
+                self.training_imgpaths_labels.append([label, img_path])
             # for img_path in glob.glob(self.data_dir_path + '/' + target_dir + '/' + '*.png'):
-            #     self.training_img_paths.append([label, img_path])
-        self.training_data_num = len(self.training_img_paths)
+            #     self.training_imgpaths_labels.append([label, img_path])
+        self.training_data_num = len(self.training_imgpaths_labels)
         # パスをシャッフル
-        random.shuffle(self.training_img_paths)
+        random.shuffle(self.training_imgpaths_labels)
 
         # テストデータセッタのがオズのパスを取得
-        self.test_img_paths = []
+        self.test_imgpaths_labels = []
         for label, target_dir in enumerate(self.test_dir):
             for img_path in glob.glob(self.data_dir_path + '/' + target_dir + '/' + '*.jpg'):
-                self.test_img_paths.append([label, img_path])
+                self.test_imgpaths_labels.append([label, img_path])
             # for img_path in glob.glob(self.data_dir_path + '/' + target_dir + '/' + '*.png'):
-            #     self.test_img_paths.append([label, img_path])
+            #     self.test_imgpaths_labels.append([label, img_path])
 
     # トレーニングデータの指定範囲の画像取得
     def get_training_dataset(self, start=None, end=None):
-        label_a_img = self.GET_DATAS(self.training_img_paths, start, end, c_func=None)
+        label_a_img = self.GET_DATAS(self.training_imgpaths_labels, start, end, c_func=None)
 
         # 画像読み込み
         tmp_imgs = []
@@ -76,7 +76,7 @@ class DataSetLocal(DataSetBase):
 
     # トレーニングデータの指定範囲のラベル取得
     def get_training_labels(self, start=None, end=None):
-        label_a_img = self.GET_DATAS(self.training_img_paths, start, end, c_func=None)
+        label_a_img = self.GET_DATAS(self.training_imgpaths_labels, start, end, c_func=None)
 
         # ラベル読み込み
         tmp_labels = []
@@ -91,7 +91,7 @@ class DataSetLocal(DataSetBase):
     # テストデータの画像取得
     def get_test_dataset(self):
         tmp_imgs = []
-        for label, path in self.test_img_paths:
+        for label, path in self.test_imgpaths_labels:
             img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
             tmp_imgs.append(resize_img(crop_img(img/255)))
 
@@ -99,11 +99,67 @@ class DataSetLocal(DataSetBase):
 
     def get_test_lebels(self):
         tmp_labels = []
-        for label, path in self.test_img_paths:
+        for label, path in self.test_imgpaths_labels:
             label_a = np.zeros(3)
             label_a[label] = 1
             tmp_labels.append(label_a)
         return np.array(tmp_labels)
+
+
+class DataSetFast(DataSetLocal):
+    def __init__(self):
+        super().__init__()
+
+        self.training_labels = []
+        self.training_datas = []
+
+        for label, path in self.training_imgpaths_labels:
+            self.training_labels.append(label)
+            self.training_datas.append(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB))
+
+        self.test_labels = []
+        self.test_datas = []
+        for label, path in self.test_imgpaths_labels:
+            self.test_labels.append(label)
+            self.test_datas.append(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB))
+
+
+    def get_training_dataset(self, start=None, end=None):
+        tmp_imgs = self.GET_DATAS(self.training_datas, start, end)
+
+        img_s = []
+        for img in tmp_imgs:
+            img_s.append(resize_img(crop_img(img/255)))
+        return np.array(img_s)
+
+    def get_training_labels(self, start=None, end=None):
+        tmp_labels = self.GET_DATAS(self.training_labels, start, end)
+
+        tmp_label_array = []
+        for label in tmp_labels:
+            label_a = np.zeros(3)
+            label_a[int(label)] = 1
+            tmp_label_array.append(label_a)
+        return np.array(tmp_label_array)
+
+
+    def get_test_dataset(self):
+        tmp_imgs = self.GET_DATAS(self.test_datas)
+
+        img_s = []
+        for img in tmp_imgs:
+            img_s.append(resize_img(crop_img(img/255)))
+        return np.array(img_s)
+
+    def get_test_labels(self):
+        tmp_labels = self.GET_DATAS(self.test_labels)
+
+        tmp_label_array = []
+        for label in tmp_labels:
+            label_a = np.zeros(3)
+            label_a[label] = 1
+            tmp_label_array.append(label_a)
+        return np.array(tmp_label_array)
 
 
 
@@ -119,7 +175,7 @@ class DataSetAzure(DataSetBase):
         label_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                         directory_name=self.meta['dataset-dir'],
                                                         file_name=self.meta['dataset-file']['label'])
-        self.labels = np.frombuffer(label_base.content, float).reshape([-1, 3])
+        self.labels = np.frombuffer(label_base.content, np.float64).reshape([-1, 3])
         # バイナリデータからデータセットを取得
         dataset_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                           directory_name=self.meta['dataset-dir'],
@@ -127,14 +183,14 @@ class DataSetAzure(DataSetBase):
         shape_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                         directory_name=self.meta['dataset-dir'],
                                                         file_name=self.meta['dataset-file']['shape'])
-        shape = np.frombuffer(shape_base.content, int)
-        self.dataset = np.frombuffer(dataset_base.content, float).reshape(shape)
+        shape = np.frombuffer(shape_base.content, np.int64)
+        self.dataset = np.frombuffer(dataset_base.content, np.float64).reshape(shape)
 
         # バイナリデータからテストラベルデータを取得
         label_test_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                              directory_name=self.meta['dataset-dir'],
                                                              file_name=self.meta['dataset-test-file']['label'])
-        self.test_labels = np.frombuffer(label_test_base.content, float).reshape([-1, 3])
+        self.test_labels = np.frombuffer(label_test_base.content, np.float64).reshape([-1, 3])
         # バイナリデータからテストデータセットを取得
         dataset_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                           directory_name=self.meta['dataset-dir'],
@@ -142,8 +198,8 @@ class DataSetAzure(DataSetBase):
         shape_base = self.azure_files.get_file_to_bytes(share_name=self.share_name,
                                                         directory_name=self.meta['dataset-dir'],
                                                         file_name=self.meta['dataset-test-file']['shape'])
-        shape = np.frombuffer(shape_base.content, int)
-        self.test_dataset = np.frombuffer(dataset_base.content, np.float).reshape(shape)
+        shape = np.frombuffer(shape_base.content, np.int64)
+        self.test_dataset = np.frombuffer(dataset_base.content, np.float64).reshape(shape)
 
     # データ取得メソッド
     def get_data(self, dir, file):
@@ -218,14 +274,14 @@ class DataSetOperater(DataSetBase):
     # データセット取得メソッド
     def get_training_dataset(self, start=None, end=None):
         label_s, img_s = [], []
-        img_shape = np.frombuffer(open('data_set/dataset.meta', 'rb').read(), int)
+        img_shape = np.frombuffer(open('data_set/dataset.meta', 'rb').read(), np.int64)
         with open('data_set/dataset.data', 'rb') as file:
             imgs_data = file.read()
-            img_s = np.frombuffer(imgs_data, float)
+            img_s = np.frombuffer(imgs_data, np.float64)
             img_s = img_s.reshape(img_shape)
         with open('data_set/dataset.label', 'rb') as file:
             labels_data = file.read()
-            label_s = np.frombuffer(labels_data, float)
+            label_s = np.frombuffer(labels_data, np.float64)
             label_s = label_s.reshape([-1, 3])
 
         return [label_s, img_s]
