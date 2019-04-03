@@ -73,16 +73,16 @@ if __name__ == '__main__':
 
         saver = tf.train.Saver()
 
-        data_set = DataSetAzure()
-        batch_size = 64
+        data_set = DataSetFast()
+        batch_size = 60
         training_num = 20000
 
-        # チェックポイントの確認
-        ckpt_state = tf.train.get_checkpoint_state("./sess_data")
-        if ckpt_state:
-            # チェックポイントあれば、variableを取得
-            restore_model = ckpt_state.model_checkpoint_path
-            saver.restore(sess, restore_model)
+        # # チェックポイントの確認
+        # ckpt_state = tf.train.get_checkpoint_state("./sess_data")
+        # if ckpt_state:
+        #     # チェックポイントあれば、variableを取得
+        #     restore_model = ckpt_state.model_checkpoint_path
+        #     saver.restore(sess, restore_model)
 
         # トレーニング
         for i in range(training_num):
@@ -101,13 +101,4 @@ if __name__ == '__main__':
                 result = np.equal(np.argmax(result_p, 1), np.argmax(test_labels, 1))
                 print('Step: %d, Accuracy: %d / %d, loss: %f' % (i+1, np.sum(result), len(result), result_loss))
 
-                if (i+1)%1000 == 0:
-                    #test_datas = data_set.get_test_dataset()
-                    #result_p, w0, w1, fil_1, fil_2 = sess.run([p, W_0, W_1, conv_f_1, conv_f_2],
-                     #                                         feed_dict={img_base: test_datas})
-                    saver.save(sess, './sess_data/sess.ckpt', global_step=i+1)
-                    print()
-
-            else:
-                #print('Step: %d' % (i+1))
-                True
+        saver.save(sess, './sess_data/sess.ckpt')
